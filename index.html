@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Author's Bookstore</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NIKBUK | Author's Bookstore</title>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
     <style>
         :root {
             --bg-primary: #ffffff;
@@ -14,591 +17,254 @@
             --accent: #007bff;
             --border: #e0e0e0;
             --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --bar-height: 70px;
         }
+
         [data-theme="dark"] {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --text-primary: #ffffff;
-            --text-secondary: #ccc;
-            --accent: #4dabf7;
-            --border: #444;
+            --bg-primary: #1a1a1a; --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff; --text-secondary: #ccc;
+            --accent: #4dabf7; --border: #444;
         }
-        [data-theme="warm"] {
-            --bg-primary: #fdf6e3;
-            --bg-secondary: #f9e4b7;
-            --text-primary: #5f4b32;
-            --text-secondary: #8b7355;
-            --accent: #d97706;
-            --border: #e6ccb2;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            overflow-x: hidden;
-            transition: all 0.3s ease;
+            line-height: 1.6;
+            /* Fixes the occlusion issue */
+            scroll-padding-top: var(--bar-height);
+            scroll-padding-bottom: var(--bar-height);
         }
+
+        /* Fixed Bars with Blur Effect */
         .top-bar {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: var(--bg-primary);
+            position: fixed; top: 0; width: 100%; height: var(--bar-height);
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            padding: 12px 20px;
             display: flex; align-items: center; justify-content: space-between;
-            z-index: 1000;
-            box-shadow: var(--shadow);
+            padding: 0 20px; z-index: 2000;
         }
-        .logo { font-size: 24px; font-weight: bold; color: var(--accent); }
-        .top-controls { display: flex; gap: 10px; align-items: center; }
-        .btn { 
-            padding: 8px 16px; border: 1px solid var(--accent); 
-            background: var(--accent); color: white; 
-            border-radius: 6px; cursor: pointer; font-size: 14px;
-            transition: all 0.2s;
-        }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .theme-toggle { background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 8px; }
+
         .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: var(--bg-primary);
+            position: fixed; bottom: 0; width: 100%; height: var(--bar-height);
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
             border-top: 1px solid var(--border);
-            display: flex; justify-content: space-around;
-            padding: 12px 0; z-index: 1000;
-            box-shadow: var(--shadow);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 2000;
         }
-        .tab-btn { 
-            display: flex; flex-direction: column; align-items: center;
-            gap: 4px; padding: 8px; color: var(--text-secondary);
-            cursor: pointer; transition: all 0.2s;
-            font-size: 12px;
+
+        /* Main Content Padding ensures nothing is hidden */
+        .main-content { 
+            padding-top: calc(var(--bar-height) + 10px); 
+            padding-bottom: calc(var(--bar-height) + 20px);
+            min-height: 100vh;
         }
-        .tab-btn.active { color: var(--accent); }
-        .main-content { padding: 80px 16px 100px; min-height: 100vh; }
-        .slide-container { display: flex; transition: transform 0.4s ease; }
-        .slide { min-width: 100%; padding: 40px 20px; text-align: center; }
-        .slide h2 { margin-bottom: 30px; font-size: 28px; }
-        .lang-btn { 
-            width: 140px; height: 60px; margin: 10px; 
-            font-size: 18px; border-radius: 12px;
-        }
-        input { 
-            width: 100%; padding: 16px; margin: 12px 0;
-            border: 2px solid var(--border); border-radius: 12px;
-            font-size: 16px; transition: border-color 0.2s;
-        }
-        input:focus { outline: none; border-color: var(--accent); }
-        .numeric-input { font-family: monospace; }
+
         .btn-primary { 
-            width: 100%; padding: 18px; margin-top: 20px;
-            font-size: 18px; background: var(--accent); 
-            border: none; border-radius: 12px; color: white;
+            width: 100%; padding: 16px; background: var(--accent); 
+            border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer;
         }
+
         .book-card { 
-            background: var(--bg-secondary); 
-            border-radius: 16px; padding: 20px; margin: 16px 0;
-            display: flex; gap: 16px; cursor: pointer;
-            transition: all 0.2s; box-shadow: var(--shadow);
-        }
-        .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
-        .book-cover { width: 80px; height: 120px; object-fit: cover; border-radius: 8px; }
-        .book-info h3 { margin-bottom: 8px; color: var(--text-primary); }
-        .book-meta { font-size: 14px; color: var(--text-secondary); margin: 4px 0; }
-        .price { font-size: 18px; font-weight: bold; color: var(--accent); }
-        .search-bar { 
-            position: sticky; top: 80px; background: var(--bg-primary);
-            padding: 16px; margin: -16px -16px 20px; border-radius: 0 0 16px 16px;
+            background: var(--bg-secondary); border-radius: 16px; 
+            padding: 15px; margin-bottom: 15px; display: flex; gap: 15px;
             box-shadow: var(--shadow);
         }
-        .filter-chips { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
-        .chip { 
-            padding: 8px 16px; background: var(--bg-secondary); 
-            border-radius: 20px; font-size: 14px; cursor: pointer;
-        }
-        .cart-item { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); }
-        .cart-thumbnail { width: 60px; height: 90px; object-fit: cover; border-radius: 8px; }
-        .qty-controls { display: flex; gap: 8px; align-items: center; }
-        .qty-btn { width: 32px; height: 32px; border: 1px solid var(--border); background: var(--bg-secondary); border-radius: 50%; cursor: pointer; }
-        .total { font-size: 24px; font-weight: bold; text-align: center; padding: 20px; border-top: 3px solid var(--accent); }
-        .profile-field { 
-            background: var(--bg-secondary); padding: 20px; 
-            border-radius: 12px; margin: 12px 0; text-align: center;
-        }
-        .preview-gallery { display: flex; gap: 8px; overflow-x: auto; padding: 16px 0; }
-        .preview-img { width: 120px; height: 160px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-        .reviews { margin-top: 30px; }
-        .review { background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin: 12px 0; }
-        .stars { color: #ffc107; font-size: 18px; }
+
         .hidden { display: none !important; }
-        @media (max-width: 480px) {
-            .main-content { padding: 70px 12px 90px; }
-            .top-bar { padding: 10px 12px; }
-        }
+        input, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); }
     </style>
 </head>
 <body data-theme="light">
+
     <div class="top-bar">
-        <div class="logo">📚</div>
-        <div>Author's Bookstore</div>
-        <div class="top-controls">
-            <button class="btn" onclick="downloadApp()">Download app</button>
-            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-        </div>
+        <div style="font-size: 20px; font-weight: 800; color: var(--accent);">NIKBUK</div>
+        <button onclick="toggleTheme()" style="background:none; border:none; font-size:20px; cursor:pointer;">🌓</button>
     </div>
 
-    <div class="bottom-bar hidden" id="bottomBar">
-        <div class="tab-btn active" onclick="showTab('home')">
-            <span>🏠</span>Home
-        </div>
-        <div class="tab-btn" onclick="showTab('cart')">
-            <span>🛒</span>Cart
-        </div>
-        <div class="tab-btn" onclick="showTab('profile')">
-            <span>👤</span>Profile
-        </div>
+    <div id="bottomNav" class="bottom-bar hidden">
+        <div onclick="showTab('home')">🏠<br><small>Home</small></div>
+        <div onclick="showTab('cart')">🛒<br><small>Cart</small></div>
+        <div onclick="showTab('profile')">👤<br><small>Profile</small></div>
     </div>
 
-    <div class="main-content" id="mainContent">
-        <!-- Onboarding Slides -->
-        <div id="onboarding" class="slide-container">
-            <div class="slide">
-                <h2 id="lang-title">Choose Language</h2>
-                <button class="lang-btn btn-primary" onclick="setLanguage('en')">English</button>
-                <button class="lang-btn btn-primary" onclick="setLanguage('ml')">മലയാളം</button>
+    <div class="main-content" id="app">
+        <section id="onboarding">
+            <div id="step1" class="slide" style="text-align:center; padding: 50px 20px;">
+                <h2>Welcome to NIKBUK</h2>
+                <p>Choose your preferred language</p><br>
+                <button class="btn-primary" onclick="setLang('en')">English</button><br><br>
+                <button class="btn-primary" style="background:#555" onclick="setLang('ml')">Malayalam</button>
             </div>
-            <div class="slide hidden">
-                <h2 id="details-title">Enter Details</h2>
-                <input type="text" id="fullName" placeholder="Full Name" required>
-                <div style="position: relative;">
-                    <input type="tel" id="phone" class="numeric-input" placeholder="Phone Number" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
-                    <span style="position: absolute; left: 16px; top: 18px; pointer-events: none; color: var(--text-secondary);">+91</span>
-                </div>
-                <button class="btn-primary" onclick="nextSlide(2)">Continue</button>
-            </div>
-            <div class="slide hidden">
-                <h2 id="login-title">Login</h2>
-                <p>Click below to login with Google</p>
-                <button class="btn-primary" onclick="completeOnboarding()">Complete Setup</button>
-            </div>
-        </div>
 
-        <!-- Home Tab -->
-        <div id="homeTab" class="hidden">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search books…" oninput="filterBooks()">
+            <div id="step2" class="slide hidden" style="padding: 20px;">
+                <h2>Your Identity</h2>
+                <input type="text" id="regName" placeholder="Full Name">
+                <input type="tel" id="regPhone" placeholder="Phone Number">
+                <p style="font-size: 12px; margin-top:10px;">Login with Google to complete setup:</p>
+                <div id="googleBtn"></div>
             </div>
-            <div class="filter-chips" id="filterChips">
-                <span class="chip" onclick="filterBooks('all')">All</span>
-                <span class="chip" onclick="filterBooks('en')">English</span>
-                <span class="chip" onclick="filterBooks('ml')">Malayalam</span>
-            </div>
-            <div id="bookList"></div>
-        </div>
+        </section>
 
-        <!-- Cart Tab -->
-        <div id="cartTab" class="hidden">
+        <section id="homeTab" class="hidden">
+            <input type="text" id="search" placeholder="Search by title or author..." oninput="renderBooks()">
+            <div id="catalog">Loading books...</div>
+        </section>
+
+        <section id="cartTab" class="hidden" style="padding:20px;">
+            <h2>Your Cart</h2>
             <div id="cartItems"></div>
-            <div class="total" id="grandTotal">₹0.00</div>
-            <button class="btn-primary" onclick="showTab('home')" style="margin: 20px;">Browse Books</button>
-            <button class="btn-primary" onclick="showPayment()" id="payBtn" disabled>Pay Now</button>
-        </div>
+            <div id="cartTotal" style="font-size:20px; font-weight:bold; margin:20px 0;">Total: ₹0</div>
+            <button id="checkoutBtn" class="btn-primary" onclick="startCheckout()">Proceed to Checkout</button>
+        </section>
 
-        <!-- Profile Tab -->
-        <div id="profileTab" class="hidden">
-            <div class="profile-field">
-                <strong id="profileName">-</strong>
+        <section id="profileTab" class="hidden" style="padding:20px;">
+            <div id="userCard" class="book-card" style="flex-direction:column; text-align:center;">
+                <h3 id="uName">Name</h3>
+                <p id="uEmail">Email</p>
             </div>
-            <div class="profile-field">
-                Phone: <strong id="profilePhone">-</strong>
-            </div>
-            <div class="profile-field">
-                Email: <strong id="profileEmail">-</strong>
-            </div>
-            <div style="margin: 20px 0;">
-                <button class="lang-btn btn-primary" onclick="setLanguage('en')" style="width: 48%; margin-right: 4%;">English</button>
-                <button class="lang-btn btn-primary" onclick="setLanguage('ml')" style="width: 48%;">മലയാളം</button>
-            </div>
-            <button class="btn" onclick="donate()" style="background: #10b981;">Donate to Author</button>
-            <br><br>
-            <button class="btn" onclick="logout()" style="background: #ef4444;">Logout</button>
-        </div>
+            <button class="btn-primary" style="background:#ef4444; margin-top:20px;" onclick="logout()">Logout</button>
+        </section>
     </div>
 
     <script>
-        // Sample book data
-        const books = [
-            {id: 1, title: 'My Journey', desc: 'Autobiographical memoir of self-discovery', lang: 'en', pages: 280, format: 'PDF/ePub', price: 299, rating: 4.5, date: '2025-01-15', cover: 'https://via.placeholder.com/80x120/007bff/ffffff?text=Book+1', previews: ['https://via.placeholder.com/120x160/007bff/ffffff?text=Preview+1', 'https://via.placeholder.com/120x160/007bff/ffffff?text=Preview+2']},
-            {id: 2, title: 'എന്റെ യാത്ര', desc: 'ആത്മകഥാപരമായ ഓർമ്മകൾ', lang: 'ml', pages: 320, format: 'PDF/ePub', price: 349, rating: 4.8, date: '2025-02-20', cover: 'https://via.placeholder.com/80x120/ff6b6b/ffffff?text=Book+2', previews: ['https://via.placeholder.com/120x160/ff6b6b/ffffff?text=Preview+1', 'https://via.placeholder.com/120x160/ff6b6b/ffffff?text=Preview+2']},
-            {id: 3, title: 'Philosophical Thoughts', desc: 'Deep reflections on life and existence', lang: 'en', pages: 210, format: 'PDF', price: 249, rating: 4.2, date: '2025-03-10', cover: 'https://via.placeholder.com/80x120/10b981/ffffff?text=Book+3', previews: ['https://via.placeholder.com/120x160/10b981/ffffff?text=Preview+1']},
-        ];
-
-        let currentUser = JSON.parse(localStorage.getItem('userData')) || null;
-        let currentLanguage = localStorage.getItem('appLanguage') || 'en';
-        let currentTab = 'home';
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let currentSlide = 0;
-        let theme = localStorage.getItem('theme') || 'light';
-
-        // Translations
-        const translations = {
-            en: {
-                langTitle: 'Choose Language',
-                detailsTitle: 'Enter Your Details',
-                loginTitle: 'Complete Setup',
-                searchPlaceholder: 'Search books…',
-                profileNote: 'To change details, logout and signup again',
-                donateBtn: 'Donate to support the author',
-                logoutBtn: 'Logout'
-            },
-            ml: {
-                langTitle: 'ഭാഷ തിരഞ്ഞെടുക്കുക',
-                detailsTitle: 'നിങ്ങളുടെ വിവരങ്ങൾ നൽകുക',
-                loginTitle: 'സജ്ജമാക്കൽ പൂർത്തിയാക്കുക',
-                searchPlaceholder: 'പുസ്തകങ്ങൾ തിരയുക…',
-                profileNote: 'വിവരങ്ങൾ മാറ്റാൻ ലോഗൗട്ട് ചെയ്ത് വീണ്ടും സൈൻഇൻ ചെയ്യുക',
-                donateBtn: 'ലേഖകനെ സഹായിക്കാൻ സംഭാവന നൽകുക',
-                logoutBtn: 'ലോഗൗട്ട്'
-            }
+        // CONFIGURATION - PASTE YOUR DETAILS HERE
+        const CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+        const API = {
+            catalog: "YOUR_CATALOG_API_URL",
+            profile: "YOUR_PROFILE_API_URL",
+            orders: "YOUR_ORDERS_API_URL",
+            failed: "YOUR_FAILED_API_URL"
         };
 
-        function init() {
-            applyTheme();
-            document.documentElement.lang = currentLanguage;
-            if (!currentUser) {
-                showOnboarding();
+        let user = JSON.parse(localStorage.getItem('nikbuk_user'));
+        let cart = JSON.parse(localStorage.getItem('nikbuk_cart')) || [];
+        let books = [];
+
+        async function init() {
+            if (user) {
+                showTab('home');
+                fetchCatalog();
             } else {
-                showMainApp();
-                updateProfileDisplay();
-                renderHome();
-                updateCart();
+                setupGoogleAuth();
             }
-            updateTexts();
         }
 
-        function setLanguage(lang) {
-            currentLanguage = lang;
-            localStorage.setItem('appLanguage', lang);
-            document.documentElement.lang = lang;
-            updateTexts();
-            if (currentSlide === 0) nextSlide(1);
-        }
-
-        function nextSlide(slide) {
-            document.querySelectorAll('.slide')[currentSlide].classList.add('hidden');
-            currentSlide = slide;
-            document.querySelectorAll('.slide')[slide].classList.remove('hidden');
-        }
-
-        function completeOnboarding() {
-            const name = document.getElementById('fullName').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            
-            if (!name || !phone || phone.length !== 10) {
-                alert('Please fill all fields correctly');
-                return;
-            }
-
-            currentUser = {
-                name,
-                phone: '+91' + phone,
-                email: name.toLowerCase() + '@example.com', // Simulated OAuth
-                oauth: true
-            };
-            
-            localStorage.setItem('userData', JSON.stringify(currentUser));
-            showMainApp();
-            updateProfileDisplay();
-            renderHome();
-        }
-
-        function showMainApp() {
-            document.getElementById('onboarding').classList.add('hidden');
-            document.getElementById('bottomBar').classList.remove('hidden');
-            showTab('home');
-        }
-
-        function showOnboarding() {
-            document.getElementById('onboarding').classList.remove('hidden');
-            document.getElementById('bottomBar').classList.add('hidden');
-            document.querySelectorAll('#mainContent > div:not(#onboarding)').forEach(el => el.classList.add('hidden'));
-        }
-
-        function showTab(tab) {
-            document.querySelectorAll('#mainContent > div:not(#onboarding)').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tab + 'Tab').classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
-            currentTab = tab;
-            
-            if (tab === 'home') renderHome();
-            if (tab === 'cart') updateCart();
-            if (tab === 'profile') updateProfileDisplay();
-        }
-
-        function renderHome() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const bookList = document.getElementById('bookList');
-            const filteredBooks = books.filter(book => 
-                book.title.toLowerCase().includes(search) ||
-                book.desc.toLowerCase().includes(search)
+        // --- AUTH LOGIC ---
+        function setupGoogleAuth() {
+            google.accounts.id.initialize({
+                client_id: CLIENT_ID,
+                callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("googleBtn"),
+                { theme: "outline", size: "large", width: "100%" }
             );
+        }
+
+        function handleCredentialResponse(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            user = {
+                name: document.getElementById('regName').value || payload.name,
+                email: payload.email,
+                phone: document.getElementById('regPhone').value,
+                pic: payload.picture
+            };
+            localStorage.setItem('nikbuk_user', JSON.stringify(user));
+            syncProfileToBackend(user);
+            showTab('home');
+            fetchCatalog();
+        }
+
+        // --- DATA LOGIC ---
+        async function fetchCatalog() {
+            try {
+                const res = await fetch(API.catalog);
+                books = await res.json();
+                renderBooks();
+            } catch (e) {
+                logError('CatalogFetch', e.message);
+            }
+        }
+
+        function renderBooks() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const container = document.getElementById('catalog');
+            const filtered = books.filter(b => b.title.toLowerCase().includes(query));
             
-            bookList.innerHTML = filteredBooks.map(book => `
-                <div class="book-card" onclick="showBookDetail(${book.id})">
-                    <img src="${book.cover}" class="book-cover" alt="${book.title}">
-                    <div style="flex: 1;">
-                        <h3>${book.title}</h3>
-                        <p style="color: var(--text-secondary); font-size: 14px;">${book.desc}</p>
-                        <div class="book-meta">${book.pages} pages • ${book.lang.toUpperCase()} • ${book.format}</div>
-                        <div class="price">₹${book.price}</div>
+            container.innerHTML = filtered.map(b => `
+                <div class="book-card">
+                    <img src="${b.imageurl}" width="70" height="100" style="border-radius:4px;">
+                    <div style="flex:1">
+                        <h4>${b.title}</h4>
+                        <small>${b.author}</small><br>
+                        <strong style="color:var(--accent)">₹${b.price}</strong>
                     </div>
+                    <button onclick="addToCart('${b.isbn}')" style="border:none; background:var(--accent); color:white; border-radius:5px; padding:5px 10px;">+</button>
                 </div>
             `).join('');
         }
 
-        function showBookDetail(id) {
-            const book = books.find(b => b.id === id);
-            if (!book) return;
-            
-            document.getElementById('bookList').innerHTML = `
-                <div style="background: var(--bg-secondary); padding: 24px; border-radius: 16px; margin: 20px 0;">
-                    <img src="${book.cover}" style="width: 100%; max-width: 300px; height: 400px; object-fit: cover; border-radius: 16px; display: block; margin: 0 auto;">
-                    <h2 style="text-align: center; margin: 20px 0;">${book.title}</h2>
-                    <div style="display: grid; gap: 12px; margin: 20px 0;">
-                        <div><strong>Language:</strong> ${book.lang.toUpperCase()}</div>
-                        <div><strong>Pages:</strong> ${book.pages}</div>
-                        <div><strong>Format:</strong> ${book.format}</div>
-                        <div><strong>Price:</strong> ₹${book.price}</div>
-                        <div><strong>Rating:</strong> ${'★'.repeat(Math.floor(book.rating))} ${book.rating}/5</div>
-                    </div>
-                    <div class="preview-gallery">
-                        ${book.previews.map(p => `<img src="${p}" class="preview-img" alt="Preview">`).join('')}
-                    </div>
-                    <div style="display: flex; gap: 12px; margin: 24px 0;">
-                        <button class="btn" onclick="toggleWishlist(${book.id})" style="flex: 1;">❤️ Wishlist</button>
-                        <button class="btn" onclick="addToCart(${book.id}); showTab('cart')" style="flex: 2;">Add to Cart</button>
-                    </div>
-                    <button class="btn-primary" onclick="showTab('home')" style="width: 100%;">Back to Books</button>
-                </div>
-                ${renderReviews(book.id)}
-            `;
-        }
-
-        function renderReviews(bookId) {
-            return `
-                <div class="reviews">
-                    <h3>Reviews</h3>
-                    <div class="review">
-                        <div class="stars">★★★★☆</div>
-                        <strong>Rajesh K</strong> • 2 days ago • <span style="color: green;">Verified</span><br>
-                        "Excellent read! Highly recommended."
-                    </div>
-                </div>
-            `;
-        }
-
-        function addToCart(bookId) {
-            const book = books.find(b => b.id === bookId);
-            const existing = cart.find(item => item.id === bookId);
-            if (existing) {
-                existing.quantity += 1;
-            } else {
-                cart.push({ ...book, quantity: 1 });
-            }
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCart();
-        }
-
-        function updateCart() {
-            const cartItems = document.getElementById('cartItems');
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            cartItems.innerHTML = cart.length ? cart.map(item => `
-                <div class="cart-item">
-                    <img src="${item.cover}" class="cart-thumbnail">
-                    <div style="flex: 1;">
-                        <h4>${item.title}</h4>
-                        <div>₹${item.price} × 
-                            <div class="qty-controls">
-                                <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
-                                <span>${item.quantity}</span>
-                                <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-                            </div> = ₹${item.price * item.quantity}
-                        </div>
-                    </div>
-                    <button class="btn" onclick="removeFromCart(${item.id})" style="background: #ef4444;">Remove</button>
-                </div>
-            `).join('') : '<p style="text-align: center; color: var(--text-secondary);">Your cart is empty</p>';
-            
-            document.getElementById('grandTotal').textContent = `Total: ₹${total.toFixed(2)}`;
-            document.getElementById('payBtn').disabled = total === 0;
-        }
-
-        function updateQuantity(id, delta) {
-            const item = cart.find(item => item.id === id);
-            if (item) {
-                item.quantity = Math.max(1, item.quantity + delta);
-                if (item.quantity === 0) {
-                    cart = cart.filter(item => item.id !== id);
-                }
-                localStorage.setItem('cart', JSON.stringify(cart));
-                updateCart();
-            }
-        }
-
-        function removeFromCart(id) {
-            cart = cart.filter(item => item.id !== id);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCart();
-        }
-
-        function showPayment() {
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            if (total === 0) return;
-            
-            document.getElementById('cartItems').innerHTML = `
-                <div style="background: var(--bg-secondary); padding: 24px; border-radius: 16px; margin: 20px 0;">
-                    <h3>Payment Details</h3>
-                    <input type="text" id="payName" value="${currentUser?.name || ''}" placeholder="Full Name">
-                    <input type="tel" id="payPhone" value="${currentUser?.phone || ''}" placeholder="Phone">
-                    <input type="email" id="payEmail" value="${currentUser?.email || ''}" placeholder="Email">
-                    <textarea id="address" placeholder="House, Street, City, State" rows="3" style="width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 12px;"></textarea>
-                    <div style="position: relative;">
-                        <input type="text" id="pincode" class="numeric-input" placeholder="Pincode" maxlength="6" inputmode="numeric" style="padding-left: 60px;">
-                        <span style="position: absolute; left: 16px; top: 18px; pointer-events: none; color: var(--text-secondary);">Pincode</span>
-                    </div>
-                    <div class="total" style="margin: 20px 0;">Order Total: ₹${total.toFixed(2)}</div>
-                    <button class="btn-primary" onclick="processPayment(${total})" style="width: 100%;">Pay with Razorpay</button>
-                    <button class="btn" onclick="showTab('cart')" style="width: 100%; margin-top: 12px;">Back to Cart</button>
-                </div>
-            `;
-        }
-
-        function processPayment(amount) {
+        // --- CHECKOUT & PAYMENT ---
+        function startCheckout() {
             const options = {
-                key: "rzp_test_your_key_here", // Replace with your actual Razorpay key
-                amount: amount * 100,
+                key: "YOUR_RAZORPAY_KEY",
+                amount: cart.reduce((s, i) => s + (i.price * i.qty), 0) * 100,
                 currency: "INR",
-                name: "Author's Bookstore",
-                description: "Book Purchase",
-                image: "https://via.placeholder.com/150x150/007bff/ffffff?text=📚",
-                handler: function (response) {
-                    alert('Payment successful! Order ID: ' + response.razorpay_order_id);
-                    cart = [];
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    showTab('home');
+                name: "NIKBUK",
+                handler: async function (response) {
+                    await finalizeOrder(response.razorpay_payment_id);
                 },
-                prefill: {
-                    name: document.getElementById('payName').value,
-                    contact: document.getElementById('payPhone').value.replace('+91', ''),
-                    email: document.getElementById('payEmail').value
-                },
-                theme: { color: "#007bff" }
+                prefill: { name: user.name, email: user.email }
             };
-            const rzp = new Razorpay(options);
-            rzp.open();
+            new Razorpay(options).open();
         }
 
-        function updateProfileDisplay() {
-            if (currentUser) {
-                document.getElementById('profileName').textContent = currentUser.name;
-                document.getElementById('profilePhone').textContent = currentUser.phone;
-                document.getElementById('profileEmail').textContent = currentUser.email;
-            }
-        }
-
-        function donate() {
-            const options = {
-                key: "rzp_test_your_key_here", // Replace with your actual Razorpay key
-                amount: 100 * 100, // ₹100 default donation
-                currency: "INR",
-                name: "Support Author",
-                description: "Donation to support great writing",
-                image: "https://via.placeholder.com/150x150/10b981/ffffff?text=❤️",
-                handler: function (response) {
-                    alert('Thank you for your generous donation!');
-                },
-                theme: { color: "#10b981" },
-                modal: { ondismiss: function(){} }
+        async function finalizeOrder(payId) {
+            const orderData = {
+                orderid: 'NB' + Date.now(),
+                customeremail: user.email,
+                total: cart.reduce((s, i) => s + (i.price * i.qty), 0),
+                items: JSON.stringify(cart),
+                transactionid: payId
             };
-            const rzp = new Razorpay(options);
-            rzp.open();
-        }
 
-        function logout() {
-            localStorage.removeItem('userData');
-            localStorage.removeItem('cart');
+            await fetch(API.orders, { method: 'POST', body: JSON.stringify(orderData) });
+            alert("Order Successful!");
             cart = [];
-            currentUser = null;
-            showOnboarding();
+            localStorage.removeItem('nikbuk_cart');
+            showTab('home');
+        }
+
+        // --- UI HELPERS ---
+        function showTab(tabId) {
+            ['onboarding', 'homeTab', 'cartTab', 'profileTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
+            document.getElementById(tabId + 'Tab')?.classList.remove('hidden');
+            if(tabId !== 'onboarding') document.getElementById('bottomNav').classList.remove('hidden');
+            if(tabId === 'profile') {
+                document.getElementById('uName').innerText = user.name;
+                document.getElementById('uEmail').innerText = user.email;
+            }
+        }
+
+        function setLang(l) { 
+            localStorage.setItem('lang', l); 
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
         }
 
         function toggleTheme() {
-            const themes = ['light', 'dark', 'warm'];
-            const currentIndex = themes.indexOf(theme);
-            theme = themes[(currentIndex + 1) % themes.length];
-            localStorage.setItem('theme', theme);
-            applyTheme();
+            const t = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', t);
         }
 
-        function applyTheme() {
-            document.body.setAttribute('data-theme', theme);
-            document.querySelector('.theme-toggle').textContent = theme === 'light' ? '🌙' : '☀️';
+        async function logError(endpoint, msg) {
+            fetch(API.failed, { method: 'POST', body: JSON.stringify({ endpoint, message: msg, timestamp: new Date() })});
         }
-
-        function updateTexts() {
-            const t = translations[currentLanguage];
-            document.getElementById('lang-title').textContent = t.langTitle;
-            document.getElementById('details-title').textContent = t.detailsTitle;
-            document.getElementById('login-title').textContent = t.loginTitle;
-            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
-        }
-
-        function filterBooks(filter = 'all') {
-            // Simple filter implementation - full filtering in renderHome handles search
-            renderHome();
-        }
-
-        function downloadApp() {
-            // PWA install prompt
-            if (window.deferredPrompt) {
-                window.deferredPrompt.prompt();
-            } else {
-                alert('Save this page to your home screen for app-like experience!');
-            }
-        }
-
-        // Event listeners
-        document.getElementById('searchInput').addEventListener('input', renderHome);
-        document.getElementById('phone').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-        document.getElementById('pincode').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-
-        // PWA Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
-                self.addEventListener('install', e => {
-                    self.skipWaiting();
-                });
-                self.addEventListener('activate', e => {
-                    self.clients.claim();
-                });
-                self.addEventListener('fetch', e => {
-                    e.respondWith(fetch(e.request));
-                });
-            `));
-        }
-
-        // Install prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
 
         init();
     </script>
 </body>
-</html>
+    </html>
