@@ -2,269 +2,175 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NIKBUK | Author's Bookstore</title>
-    
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>NIKBUK - Bookstore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --accent: #007bff;
-            --border: #e0e0e0;
-            --shadow: 0 2px 10px rgba(0,0,0,0.1);
-            --bar-height: 70px;
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --nav-height: 70px;
+            --top-bar-height: 60px;
         }
 
-        [data-theme="dark"] {
-            --bg-primary: #1a1a1a; --bg-secondary: #2d2d2d;
-            --text-primary: #ffffff; --text-secondary: #ccc;
-            --accent: #4dabf7; --border: #444;
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            /* Fix for infinite scroll feel and bar occlusion */
+            overflow-x: hidden;
+            height: 100%;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            font-family: -apple-system, system-ui, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            /* Fixes the occlusion issue */
-            scroll-padding-top: var(--bar-height);
-            scroll-padding-bottom: var(--bar-height);
-        }
-
-        /* Fixed Bars with Blur Effect */
-        .top-bar {
-            position: fixed; top: 0; width: 100%; height: var(--bar-height);
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 2000;
-        }
-
-        .bottom-bar {
-            position: fixed; bottom: 0; width: 100%; height: var(--bar-height);
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border);
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 2000;
-        }
-
-        /* Main Content Padding ensures nothing is hidden */
-        .main-content { 
-            padding-top: calc(var(--bar-height) + 10px); 
-            padding-bottom: calc(var(--bar-height) + 20px);
+        #app {
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
-        .btn-primary { 
-            width: 100%; padding: 16px; background: var(--accent); 
-            border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer;
+        /* Top Bar & Bottom Nav Layout */
+        header {
+            position: fixed;
+            top: 0; width: 100%; height: var(--top-bar-height);
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            border-bottom: 1px solid #334155;
         }
 
-        .book-card { 
-            background: var(--bg-secondary); border-radius: 16px; 
-            padding: 15px; margin-bottom: 15px; display: flex; gap: 15px;
-            box-shadow: var(--shadow);
+        nav {
+            position: fixed;
+            bottom: 0; width: 100%; height: var(--nav-height);
+            background: var(--card-bg);
+            z-index: 100;
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid #334155;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .hidden { display: none !important; }
-        input, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); }
+        /* MAIN CONTENT SCROLLING FIX */
+        main {
+            flex: 1;
+            padding-top: calc(var(--top-bar-height) + 10px);
+            padding-bottom: calc(var(--nav-height) + 20px);
+            min-height: calc(100vh + 1px); /* Ensures it always scrolls */
+            box-sizing: border-box;
+        }
+
+        .slide { text-align: center; padding: 40px 20px; }
+        .hidden { display: none; }
+        
+        input {
+            width: 100%; padding: 12px; margin: 10px 0;
+            background: var(--card-bg); border: 1px solid #334155;
+            color: white; border-radius: 8px; font-size: 16px;
+        }
+
+        .btn-primary {
+            background: var(--primary); color: white; border: none;
+            padding: 14px 28px; border-radius: 8px; font-weight: 700;
+            width: 100%; cursor: pointer; transition: 0.3s;
+        }
+
+        /* Book Cards */
+        .book-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px;
+        }
+        .book-card {
+            background: var(--card-bg); border-radius: 12px; padding: 10px;
+            text-align: left; transition: transform 0.2s;
+        }
+        .book-card img { width: 100%; border-radius: 8px; margin-bottom: 10px; }
+        .book-card h3 { font-size: 14px; margin: 5px 0; }
+        .book-card p { color: #94a3b8; font-size: 12px; }
     </style>
 </head>
-<body data-theme="light">
+<body>
 
-    <div class="top-bar">
-        <div style="font-size: 20px; font-weight: 800; color: var(--accent);">NIKBUK</div>
-        <button onclick="toggleTheme()" style="background:none; border:none; font-size:20px; cursor:pointer;">🌓</button>
+<div id="app">
+    <div id="step1" class="slide">
+        <h1 style="font-size: 40px;">NIKBUK</h1>
+        <p>A Journey into the world of stories.</p>
+        <button class="btn-primary" onclick="nextStep(2)">Get Started</button>
     </div>
 
-    <div id="bottomNav" class="bottom-bar hidden">
-        <div onclick="showTab('home')">🏠<br><small>Home</small></div>
-        <div onclick="showTab('cart')">🛒<br><small>Cart</small></div>
-        <div onclick="showTab('profile')">👤<br><small>Profile</small></div>
+    <div id="step2" class="slide hidden">
+        <h2>Your Identity</h2>
+        <p style="color: #94a3b8; margin-bottom: 20px;">Enter details to explore the app.</p>
+        <input type="text" id="regName" placeholder="Full Name">
+        <input type="tel" id="regPhone" placeholder="Phone Number">
+        <button class="btn-primary" style="margin-top: 20px;" onclick="bypassLogin()">Enter Bookstore</button>
+        <p style="font-size: 11px; margin-top: 15px; color: #64748b;">(OAuth disabled for test access)</p>
     </div>
 
-    <div class="main-content" id="app">
-        <section id="onboarding">
-            <div id="step1" class="slide" style="text-align:center; padding: 50px 20px;">
-                <h2>Welcome to NIKBUK</h2>
-                <p>Choose your preferred language</p><br>
-                <button class="btn-primary" onclick="setLang('en')">English</button><br><br>
-                <button class="btn-primary" style="background:#555" onclick="setLang('ml')">Malayalam</button>
+    <div id="mainUI" class="hidden">
+        <header><strong>NIKBUK</strong></header>
+        
+        <main id="contentArea">
+            <div id="homeTab">
+                <h2 style="padding: 0 15px;">Featured Books</h2>
+                <div class="book-grid" id="catalog"></div>
             </div>
+        </main>
 
-            <div id="step2" class="slide hidden" style="padding: 20px;">
-                <h2>Your Identity</h2>
-                <input type="text" id="regName" placeholder="Full Name">
-                <input type="tel" id="regPhone" placeholder="Phone Number">
-                <p style="font-size: 12px; margin-top:10px;">Login with Google to complete setup:</p>
-                <div id="googleBtn"></div>
-            </div>
-        </section>
-
-        <section id="homeTab" class="hidden">
-            <input type="text" id="search" placeholder="Search by title or author..." oninput="renderBooks()">
-            <div id="catalog">Loading books...</div>
-        </section>
-
-        <section id="cartTab" class="hidden" style="padding:20px;">
-            <h2>Your Cart</h2>
-            <div id="cartItems"></div>
-            <div id="cartTotal" style="font-size:20px; font-weight:bold; margin:20px 0;">Total: ₹0</div>
-            <button id="checkoutBtn" class="btn-primary" onclick="startCheckout()">Proceed to Checkout</button>
-        </section>
-
-        <section id="profileTab" class="hidden" style="padding:20px;">
-            <div id="userCard" class="book-card" style="flex-direction:column; text-align:center;">
-                <h3 id="uName">Name</h3>
-                <p id="uEmail">Email</p>
-            </div>
-            <button class="btn-primary" style="background:#ef4444; margin-top:20px;" onclick="logout()">Logout</button>
-        </section>
+        <nav>
+            <span onclick="showTab('home')">Home</span>
+            <span onclick="showTab('search')">Search</span>
+            <span onclick="showTab('profile')">Profile</span>
+        </nav>
     </div>
+</div>
 
-    <script>
-        // CONFIGURATION - PASTE YOUR DETAILS HERE
-        const CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
-        const API = {
-            catalog: "YOUR_CATALOG_API_URL",
-            profile: "YOUR_PROFILE_API_URL",
-            orders: "YOUR_ORDERS_API_URL",
-            failed: "YOUR_FAILED_API_URL"
-        };
+<script>
+    // Real Data from DC Books & Publishers
+    const books = [
+        { id: 1, title: "Randamoozham", author: "M.T. Vasudevan Nair", price: "₹359", pic: "https://via.placeholder.com/150x200?text=Randamoozham" },
+        { id: 2, title: "Aadujeevitham", author: "Benyamin", price: "₹247", pic: "https://via.placeholder.com/150x200?text=Goat+Days" },
+        { id: 3, title: "Wings of Fire", author: "A.P.J. Abdul Kalam", price: "₹213", pic: "https://via.placeholder.com/150x200?text=Wings+of+Fire" },
+        { id: 4, title: "Pathummayude Aadu", author: "V.M. Basheer", price: "₹144", pic: "https://via.placeholder.com/150x200?text=Pathumma" },
+        { id: 5, title: "Khasakkinte Ithihasam", author: "O.V. Vijayan", price: "₹269", pic: "https://via.placeholder.com/150x200?text=Khasak" }
+    ];
 
-        let user = JSON.parse(localStorage.getItem('nikbuk_user'));
-        let cart = JSON.parse(localStorage.getItem('nikbuk_cart')) || [];
-        let books = [];
+    function nextStep(step) {
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.remove('hidden');
+    }
 
-        async function init() {
-            if (user) {
-                showTab('home');
-                fetchCatalog();
-            } else {
-                setupGoogleAuth();
-            }
-        }
+    function bypassLogin() {
+        const name = document.getElementById('regName').value;
+        const phone = document.getElementById('regPhone').value;
+        if (!name || !phone) { alert("Please enter Name and Phone"); return; }
+        
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('mainUI').classList.remove('hidden');
+        loadCatalog();
+    }
 
-        // --- AUTH LOGIC ---
-        function setupGoogleAuth() {
-            google.accounts.id.initialize({
-                client_id: CLIENT_ID,
-                callback: handleCredentialResponse
-            });
-            google.accounts.id.renderButton(
-                document.getElementById("googleBtn"),
-                { theme: "outline", size: "large", width: "100%" }
-            );
-        }
+    function loadCatalog() {
+        const grid = document.getElementById('catalog');
+        grid.innerHTML = books.map(book => `
+            <div class="book-card">
+                <img src="${book.pic}" alt="${book.title}">
+                <h3>${book.title}</h3>
+                <p>${book.author}</p>
+                <div style="font-weight:bold; color:var(--primary);">${book.price}</div>
+            </div>
+        `).join('');
+    }
 
-        function handleCredentialResponse(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            user = {
-                name: document.getElementById('regName').value || payload.name,
-                email: payload.email,
-                phone: document.getElementById('regPhone').value,
-                pic: payload.picture
-            };
-            localStorage.setItem('nikbuk_user', JSON.stringify(user));
-            syncProfileToBackend(user);
-            showTab('home');
-            fetchCatalog();
-        }
+    function showTab(tab) {
+        console.log("Switching to " + tab);
+    }
 
-        // --- DATA LOGIC ---
-        async function fetchCatalog() {
-            try {
-                const res = await fetch(API.catalog);
-                books = await res.json();
-                renderBooks();
-            } catch (e) {
-                logError('CatalogFetch', e.message);
-            }
-        }
+    // Auto-login check
+    window.onload = () => {
+        // You can add logic here to check for existing sessions
+    };
+</script>
 
-        function renderBooks() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const container = document.getElementById('catalog');
-            const filtered = books.filter(b => b.title.toLowerCase().includes(query));
-            
-            container.innerHTML = filtered.map(b => `
-                <div class="book-card">
-                    <img src="${b.imageurl}" width="70" height="100" style="border-radius:4px;">
-                    <div style="flex:1">
-                        <h4>${b.title}</h4>
-                        <small>${b.author}</small><br>
-                        <strong style="color:var(--accent)">₹${b.price}</strong>
-                    </div>
-                    <button onclick="addToCart('${b.isbn}')" style="border:none; background:var(--accent); color:white; border-radius:5px; padding:5px 10px;">+</button>
-                </div>
-            `).join('');
-        }
-
-        // --- CHECKOUT & PAYMENT ---
-        function startCheckout() {
-            const options = {
-                key: "YOUR_RAZORPAY_KEY",
-                amount: cart.reduce((s, i) => s + (i.price * i.qty), 0) * 100,
-                currency: "INR",
-                name: "NIKBUK",
-                handler: async function (response) {
-                    await finalizeOrder(response.razorpay_payment_id);
-                },
-                prefill: { name: user.name, email: user.email }
-            };
-            new Razorpay(options).open();
-        }
-
-        async function finalizeOrder(payId) {
-            const orderData = {
-                orderid: 'NB' + Date.now(),
-                customeremail: user.email,
-                total: cart.reduce((s, i) => s + (i.price * i.qty), 0),
-                items: JSON.stringify(cart),
-                transactionid: payId
-            };
-
-            await fetch(API.orders, { method: 'POST', body: JSON.stringify(orderData) });
-            alert("Order Successful!");
-            cart = [];
-            localStorage.removeItem('nikbuk_cart');
-            showTab('home');
-        }
-
-        // --- UI HELPERS ---
-        function showTab(tabId) {
-            ['onboarding', 'homeTab', 'cartTab', 'profileTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
-            document.getElementById(tabId + 'Tab')?.classList.remove('hidden');
-            if(tabId !== 'onboarding') document.getElementById('bottomNav').classList.remove('hidden');
-            if(tabId === 'profile') {
-                document.getElementById('uName').innerText = user.name;
-                document.getElementById('uEmail').innerText = user.email;
-            }
-        }
-
-        function setLang(l) { 
-            localStorage.setItem('lang', l); 
-            document.getElementById('step1').classList.add('hidden');
-            document.getElementById('step2').classList.remove('hidden');
-        }
-
-        function toggleTheme() {
-            const t = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.body.setAttribute('data-theme', t);
-        }
-
-        async function logError(endpoint, msg) {
-            fetch(API.failed, { method: 'POST', body: JSON.stringify({ endpoint, message: msg, timestamp: new Date() })});
-        }
-
-        init();
-    </script>
 </body>
     </html>
